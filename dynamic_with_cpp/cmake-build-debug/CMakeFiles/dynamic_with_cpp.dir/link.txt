@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/dynamic_with_cpp.dir/Dynamic_SOC_2SIRS.cpp.o  -o dynamic_with_cpp 
