@@ -12,7 +12,8 @@
 #include<algorithm>
 #include<list>
 #include<sstream>
-
+#include <random>
+#include <cmath>
 
 using namespace std;
 
@@ -55,32 +56,34 @@ network create(network net, vector<vector<int> > data)
     return net;
 }
 
-//////////////////////////////////////
+////////////////////////////////
 
 
 ////A:1000,  B:0100, AB:1100, a:0010, b:0001, Ab:1001, aB;0110, ab;0011, S:0000
 
+
+//network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
+//
+/// it was merge of Transmition and Immunation Function in last version of code
+//
+// }
+//
+
+//////////////////////////
+
+//////// Dynamics of 2SIRS ////////////
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-use-auto"
 #pragma ide diagnostic ignored "cert-msc50-cpp"
 #pragma ide diagnostic ignored "bugprone-branch-clone"
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
-network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
-//
 
-//////////////////////////
+network transmission(network net,float p, float q, float h) {
 
-/////////////////////////////////////
     set<int> infected;
     set_union(net.A_list.begin(), net.A_list.end(),
-          net.B_list.begin(), net.B_list.end(),inserter(infected, infected.begin()));
-    set<int> immun;
-    set_union(net.a_list.begin(), net.a_list.end(),
-          net.b_list.begin(), net.b_list.end(),inserter(immun, immun.begin()));
+              net.B_list.begin(), net.B_list.end(), inserter(infected, infected.begin()));
 
-
-////////////////////////// Infected
-//        / have A
     for (int inf : infected) { /// be infected
 
         /// AB
@@ -96,8 +99,7 @@ network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
                     net.A_list.erase(inf);
                     net.a_list.insert(inf);
 //                    cout << "A- a+,";
-                }
-                else if (random > 0.5) {    /// AB to Ab
+                } else if (random > 0.5) {    /// AB to Ab
                     net.all_state[inf].flip(2);
                     net.all_state[inf].flip(0);
                     net.B_list.erase(inf);
@@ -106,26 +108,25 @@ network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
                 }
             }
 
-            /// transmition
+            /// transmission
             for (auto neigh : net.Neighbor[inf]) {
 
                 /// neighbor is S
                 if (net.all_state[neigh].none()) {  /// neighbor is S
 
-                    if (float(rand() % 100) / 100 < p){
+                    if (float(rand() % 100) / 100 < p) {
 
                         float random = float(rand() % 100) / 100;
 
                         if (random < 0.5) { /// S to A
-                                net.all_state[neigh].flip(3);
-                                net.A_list.insert(neigh);
-                                net.s_list.erase(neigh);
-    //                                cout << "A+,";
-                        }
-                        else if (random > 0.5) { /// S to B
-                                net.all_state[neigh].flip(2);
-                                net.B_list.insert(neigh);
-                                net.s_list.erase(neigh);
+                            net.all_state[neigh].flip(3);
+                            net.A_list.insert(neigh);
+                            net.s_list.erase(neigh);
+                            //                                cout << "A+,";
+                        } else if (random > 0.5) { /// S to B
+                            net.all_state[neigh].flip(2);
+                            net.B_list.insert(neigh);
+                            net.s_list.erase(neigh);
 //                                cout << "B+,";
                         }
                     }
@@ -164,7 +165,7 @@ network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
 //                cout << "A- a+,";
             }
 
-            /// transmition
+            /// transmission
             for (auto neigh : net.Neighbor[inf]) {
 
                 if (!(net.all_state[neigh][7] || net.all_state[neigh][5])) { /// the neighbor is not A or a
@@ -175,8 +176,7 @@ network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
                             net.A_list.insert(neigh);
 //                            cout << "A+,";
                         }
-                    }
-                    else if (net.all_state[neigh].none()) {   /// Neighbor is S
+                    } else if (net.all_state[neigh].none()) {   /// Neighbor is S
                         if (float(rand() % 100) / 100 < p) {       /// S to A
                             net.all_state[neigh].flip(3);
                             net.A_list.insert(neigh);
@@ -200,7 +200,7 @@ network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
                 net.b_list.insert(inf);
 //                cout << "B- b+,";
             }
-            /// transmition
+            /// transmission
             for (auto neigh : net.Neighbor[inf]) {
 
                 if (!(net.all_state[neigh][6] || net.all_state[neigh][4])) {    /// the neighbor is not A or a
@@ -211,8 +211,7 @@ network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
                             net.B_list.insert(neigh);
 //                            cout << "B+,";
                         }
-                    }
-                    else if (net.all_state[neigh].none()) {                   /// Neighboor is S
+                    } else if (net.all_state[neigh].none()) {                   /// Neighboor is S
                         if (float(rand() % 100) / 100 < p) {       /// S to B
                             net.all_state[neigh].flip(2);
                             net.B_list.insert(neigh);
@@ -225,87 +224,90 @@ network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
         }
     }
 
+    for (auto & j : net.all_state){
+        j = j << 4;
+        j = j | (j >> 4);
+    }
+    net.light = 0;
+    return net;
+}
 
-    ////////////////////////// Immun
-        for (int imm : immun){
-            if (net.all_state[imm][5] && net.all_state[imm][4]){ //// be ab
-                if (float(rand() % 100) / 100 < r){
+network immunization(network net,float r, float time){
+
+    set<int> immune;
+    set_union(net.a_list.begin(), net.a_list.end(),
+              net.b_list.begin(), net.b_list.end(),inserter(immune, immune.begin()));
+
+    ////////////////////////// Immune
+        for (int imm : immune) {
+
+            float q_random = float(rand() % 100) / 100;
+            if (q_random < r && q_random > (r * pow((1 - r), time))) {
+                if (net.all_state[imm][5] && net.all_state[imm][4]) { //// be ab
+//                    if (float(rand() % 100) / 100 < r) {
                     float random = float(rand() % 100) / 100;
-                    if (random < 0.5){ ///  to b
+                    if (random < 0.5) { ///  to b
                         net.all_state[imm].flip(1);
                         net.a_list.erase(imm);
-//                        cout << "a-,";
-                        }
-                    else if(random > 0.5){ /// to a
+                        //                        cout << "a-,";
+                    } else if (random > 0.5) { /// to a
                         net.all_state[imm].flip(0);
                         net.b_list.erase(imm);
-//                        cout << "b-,";
+                        //                        cout << "b-,";
                     }
-                }
-            }
-            else if (net.all_state[imm][5] && !net.all_state[imm][4]){ /// be a
-                if (float(rand() % 100) / 100 < r){ //// to S or B
+//                    }
+                } else if (net.all_state[imm][5] && !net.all_state[imm][4]) { /// be a
+//                    if (float(rand() % 100) / 100 < r) { //// to S or B
                     net.all_state[imm].flip(1);
                     net.a_list.erase(imm);
-//                    cout << "a-,";
-                    if(!net.all_state[imm][6]){
+                    //                    cout << "a-,";
+                    if (!net.all_state[imm][6]) {
                         net.s_list.insert(imm);
                     }
-                }
-            }
-            else if (net.all_state[imm][4] && !net.all_state[imm][5]) { /// be a
-                if (float(rand() % 100) / 100 < r){
+//                    }
+                } else if (net.all_state[imm][4] && !net.all_state[imm][5]) { /// be a
+//                    if (float(rand() % 100) / 100 < r) {
                     net.all_state[imm].flip(0);
                     net.b_list.erase(imm);
-//                    cout << "b-,";
-                    if(!net.all_state[imm][7]){
+                    //                    cout << "b-,";
+                    if (!net.all_state[imm][7]) {
                         net.s_list.insert(imm);
-                    }
+                        }
+//                    }
                 }
             }
         }
-//        cout << "\n";
 
-////    cout << 6;
-////
 
 ////////////////////////// lightning
     net.light = 0;
 
-    if (!net.s_list.empty() && net.A_list.empty() && net.B_list.empty()){
-////        cout << 4.0;
-        if (float(rand() % 100) / 100 < f){
+    int sus = rand() % net.s_list.size();
 
-            int sus = rand() % net.s_list.size();
-//            auto n = rand() % net.s_list.size(); // not _really_ random
-//            auto sus = *select_random(net.s_list, n);
+    float random = float(rand() % 100) / 100;
+    if (random < 0.33) {   //// S to AB
+        net.all_state[sus].flip(3);
+        net.all_state[sus].flip(2);
+        net.A_list.insert(sus);
+        net.B_list.insert(sus);
+        net.s_list.erase(sus);
 
-            float random = float(rand() % 100) / 100;
-            if (random < 0.33) {   //// S to AB
-                net.all_state[sus].flip(3);
-                net.all_state[sus].flip(2);
-                net.A_list.insert(sus);
-                net.B_list.insert(sus);
-                net.s_list.erase(sus);
+        net.light.flip(0);
+        net.light.flip(1);
+    }
+    else if (random > 0.33 && random < 0.66) { //// S to A
+        net.all_state[sus].flip(3);
+        net.A_list.insert(sus);
+        net.s_list.erase(sus);
 
-                net.light.flip(0);
-                net.light.flip(1);
-            }
-            else if (random > 0.33 && random < 0.66) { //// S to A
-                net.all_state[sus].flip(3);
-                net.A_list.insert(sus);
-                net.s_list.erase(sus);
+        net.light.flip(0);
+    }
+    else if (random > 0.66) { //// S to B
+        net.all_state[sus].flip(2);
+        net.B_list.insert(sus);
+        net.s_list.erase(sus);
 
-                net.light.flip(0);
-            }
-            else if (random > 0.66) { //// S to B
-                net.all_state[sus].flip(2);
-                net.B_list.insert(sus);
-                net.s_list.erase(sus);
-
-                net.light.flip(1);
-            }
-        }
+        net.light.flip(1);
     }
 
     for (auto & j : net.all_state){
@@ -536,7 +538,7 @@ int main()
 //     first step is lightning
 
     int sus = rand() % the_network.s_list.size();
-//
+
     float random = float(rand() % 100) / 100;
     if (random < 0.33) {   //// S to AB
         the_network.all_state[sus].flip(7);
@@ -569,11 +571,18 @@ int main()
 
 
 
+    random_device rd;
+    mt19937 gen(rd());
+
+    float mean_lightning_time = 1 / l;
+
+    normal_distribution<float> norm_dis(mean_lightning_time,sqrt(mean_lightning_time));
+    int lightning_time;
+
     vector<vector<int>> results;
 
     int save_step = 10000;
     results.reserve(save_step);
-
 
     clock_t tStart = clock();
 
@@ -584,7 +593,11 @@ int main()
                                               static_cast<int>(the_network.B_list.size()), static_cast<int>(the_network.b_list.size()),
                                               static_cast<int>(the_network.light.to_ulong())}});
 
-        the_network = dynamics_2SIRS(the_network,p,q,h,r,l);
+        the_network = transmission(the_network,p,q,h);
+        if (the_network.A_list.empty() && the_network.B_list.empty()){
+            lightning_time = int(norm_dis(gen));
+            the_network = immunization(the_network,r,lightning_time);
+        }
 
         if (k % save_step == 0) {
 
