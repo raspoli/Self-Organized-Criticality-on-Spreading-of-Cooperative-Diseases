@@ -1,6 +1,5 @@
 //#include<windows.h>
 
-#include <utility>
 #include<vector>
 #include<set>
 #include<iostream>
@@ -12,7 +11,7 @@
 #include<bitset>
 #include<algorithm>
 #include<list>
-
+#include<sstream>
 
 
 using namespace std;
@@ -329,16 +328,18 @@ vector<vector<int>> AdjList(const string& path, int size){
     vector<vector<int>> adjlist;
     adjlist.reserve(size);
 
-    int x = 0, o = 0, number = 0;
+    int x = 0;
+//    int o = 0;
+
 
     while(true)
     {
+        int number = 0;
         adjlist.emplace_back();
         getline(graph, line);
         if(line.length() == 0)
             break;
-        number = 0;
-        o = 0;
+//        o = 0;
 
         for(int i = 1; i < line.length(); i++)
         {
@@ -353,8 +354,7 @@ vector<vector<int>> AdjList(const string& path, int size){
             {
                 adjlist[x].push_back(number);
                 number = 0;
-                o++;
-
+//                o++;
             }
             if(line[i] == ']')
                 break;
@@ -365,6 +365,115 @@ vector<vector<int>> AdjList(const string& path, int size){
 
     return adjlist;
 }
+
+///// Function for read and write, Network Data as state and lists
+//vector < bitset<8> > read_stat(const string& path, int size){
+//    ifstream state;
+//    state.open(path);
+//    string line;
+//
+//    vector < bitset<8> > states;
+//    states.reserve(size);
+//
+//    int o = 3;
+//    bitset<8> number = 0;
+//
+//    getline(state, line);
+//
+//    for(int i = 1; i < line.length(); i++)
+//    {
+//        if(line[i] == '1')
+//        {
+//            number.flip(o);
+//        }
+//        else if(line[i] == ',' || line[i] == ']')
+//        {
+//            states.emplace_back(number);
+//            number = 0;
+//            o = 3;
+//        }
+//        if(line[i] == 'e')
+//            break;
+//        o--;
+//    }
+//
+//    state.close();
+//
+//    return states;
+//}
+
+
+//vector <set<int>> read_list(const string& path, int size){
+//    ifstream list;
+//    list.open(path);
+//    string line;
+//    cout << 5;
+//    vector<set <int>> q_list;
+//
+//    int x = 0;
+////    , o = 3;
+//    while (true) {
+//        int number = 0;
+//        getline(list, line);
+//
+//        if(line.length() == 0){
+//            cout << 0 << "\n";
+//            break;}
+//
+//        for (int i = 1; i < line.length(); i++) {
+//            q_list[x] = {};
+//            if (line[i] >= '0' && line[i] <= '9') {
+//                number = number * 10 + int(line[i] - '0');
+//            }
+//            else if (line[i] == ',') {
+//                cout << 5;
+//                q_list[x].insert(number);
+//                number = 0;
+//            }
+//            if (line[i] == 'e')
+//                break;
+//        }
+//        x++;
+//        cout << 1 << "\n";
+//    }
+//    list.close();
+//
+//    return q_list;
+//}
+
+//void save_network_details(const network& net,const string& path,const string& filename){
+//    ofstream s_file(path+"state"+filename);
+//    for (auto sta: net.all_state) {
+//        s_file << sta << ",";
+//    }
+//    s_file << "e";
+//
+//    ofstream l_file(path+"list"+filename);
+//    for (auto Al: net.A_list) {
+//        l_file << Al << ",";
+//    }
+//    l_file << "e" << "\n";
+//
+//    for (auto al: net.a_list) {
+//        l_file << al << ",";
+//    }
+//    l_file << "e" << "\n";
+//
+//    for (auto Bl: net.B_list) {
+//        l_file << Bl << ",";
+//    }
+//    l_file << "e" << "\n";
+//
+//    for (auto bl: net.b_list) {
+//        l_file << bl << ",";
+//    }
+//    l_file << "e" << "\n";
+//
+//    for (auto sl: net.s_list) {
+//        l_file << sl << ",";
+//    }
+//    l_file << "e" << "\n";
+//}
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cert-msc51-cpp"
@@ -386,6 +495,9 @@ int main()
     cout<<"please enter lattice length and outbreak probability, like 256 , 0.55 "<<"\n";
     cin >> length >> p;
 
+
+    int lattice_size = length * length;
+
 //    p = 0.75;
     q = 0.99;
     h = 0.80;
@@ -393,11 +505,16 @@ int main()
     l = 0.00015;
 
 
+    ostringstream filenames(",");
+    filenames.precision(2);
+    filenames << length << "," << p << ".txt";
+    string filename = filenames.str();
+
+
+
     // read adjacency matrix from file and make 2d vector for adjacency matrix
     string line;
     vector<vector<int>> adjlist;
-
-    int lattice_size = length * length;
 
     adjlist = AdjList(path + "AdjList" + to_string(length) +"lattice.txt",lattice_size);
 
@@ -410,6 +527,11 @@ int main()
         the_network.s_list.insert(i);
     }
 
+//    cout << 1;
+//    vector<set<int>> all_list = read_list(path+"list"+filename,lattice_size);
+//    cout << 2;
+//    the_network.A_list = all_list[0];
+//    cout << the_network.A_list.size();
 
 //     first step is lightning
 
@@ -468,7 +590,7 @@ int main()
 
             printf("Time taken: %.2fs\n", (double) (clock() - tStart) / CLOCKS_PER_SEC);
 
-            ofstream file(path + "/results" + to_string(length) + "," + to_string(p) + ".txt", ios_base::app | ios_base::out);
+            ofstream file(filename, ios_base::app | ios_base::out);
             ostream_iterator<int> output_iterator(file, ",");
             for (auto res: results) {
                 copy(res.begin(), res.end(), output_iterator);
