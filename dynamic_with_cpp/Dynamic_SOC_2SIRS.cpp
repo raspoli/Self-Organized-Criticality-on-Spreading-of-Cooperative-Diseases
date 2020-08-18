@@ -44,10 +44,14 @@ network create(network net, vector<vector<int> > data)
     net.all_state.reserve(data.size());
     net.Neighbor.reserve(data.size());
 
+//    bitset<8> is;
+//    is = 0;
+
     for(int i = 0; i < data.size() - 1; i++)
     {
         net.all_state.emplace_back(bitset<8>(0));
         net.Neighbor.push_back(data[i]);
+//        cout << net.all_state[i] << "\n";
     }
     net.A_list = {};
     net.a_list = {};
@@ -88,7 +92,7 @@ network transmission(network net,float p, float q, float h) {
 
         /// AB
         if (net.all_state[inf][7] && net.all_state[inf][6]) {  /// AB
-//            cout << "AB is here,";
+//            cout << "AB is here,\n";
             /// health
             if (float(rand() % 100) / 100 < h) {  /// loss A or B
 
@@ -154,7 +158,7 @@ network transmission(network net,float p, float q, float h) {
 
             /// A or A
         else if (net.all_state[inf][7] && !net.all_state[inf][6]) { /// A or Ab
-//            cout << "A is here,";
+//            cout << "A is here,\n";
             /// health
             if (float(rand() % 100) / 100 < h) {  /// loss A
                 /// A? to a or aB or ab
@@ -189,8 +193,8 @@ network transmission(network net,float p, float q, float h) {
         }
 
             /// B or Ba
-        else if (net.all_state[inf][6] || !net.all_state[inf][7]) { /// have B
-//            cout << "B is here,";
+        else if (net.all_state[inf][6] && !net.all_state[inf][7]) { /// have B
+//            cout << "B is here,\n";
             /// health
             if (float(rand() % 100) / 100 < h) {  /// loss B
                 /// B? to b or Ab or ab
@@ -220,6 +224,17 @@ network transmission(network net,float p, float q, float h) {
                         }
                     }
                 }
+            }
+        }
+        else{
+            net.A_list.erase(inf);
+            net.B_list.erase(inf);
+
+            if (net.all_state[inf][0]){
+                net.a_list.insert(inf);
+            }
+            if (net.all_state[inf][1]){
+                net.b_list.insert(inf);
             }
         }
     }
@@ -278,43 +293,42 @@ network immunization(network net,float r, float time){
             }
         }
 
-
-////////////////////////// lightning
-    net.light = 0;
-
-    int sus = rand() % net.s_list.size();
-
-    float random = float(rand() % 100) / 100;
-    if (random < 0.33) {   //// S to AB
-        net.all_state[sus].flip(3);
-        net.all_state[sus].flip(2);
-        net.A_list.insert(sus);
-        net.B_list.insert(sus);
-        net.s_list.erase(sus);
-
-        net.light.flip(0);
-        net.light.flip(1);
-    }
-    else if (random > 0.33 && random < 0.66) { //// S to A
-        net.all_state[sus].flip(3);
-        net.A_list.insert(sus);
-        net.s_list.erase(sus);
-
-        net.light.flip(0);
-    }
-    else if (random > 0.66) { //// S to B
-        net.all_state[sus].flip(2);
-        net.B_list.insert(sus);
-        net.s_list.erase(sus);
-
-        net.light.flip(1);
-    }
-
     for (auto & j : net.all_state){
         j = j << 4;
         j = j | (j >> 4);
     }
+////////////////////////// lightning
+    if (!net.s_list.empty()) {
+        int sus = rand() % net.s_list.size();
 
+        float random = float(rand() % 100) / 100;
+        if (random < 0.33) {   //// S to AB
+            net.all_state[sus].flip(7);
+            net.all_state[sus].flip(3);
+            net.all_state[sus].flip(6);
+            net.all_state[sus].flip(2);
+            net.A_list.insert(sus);
+            net.B_list.insert(sus);
+            net.s_list.erase(sus);
+
+            net.light.flip(0);
+            net.light.flip(1);
+        } else if (random > 0.33 && random < 0.66) { //// S to A
+            net.all_state[sus].flip(7);
+            net.all_state[sus].flip(3);
+            net.A_list.insert(sus);
+            net.s_list.erase(sus);
+
+            net.light.flip(0);
+        } else if (random > 0.66) { //// S to B
+            net.all_state[sus].flip(6);
+            net.all_state[sus].flip(2);
+            net.B_list.insert(sus);
+            net.s_list.erase(sus);
+
+            net.light.flip(1);
+        }
+    }
     return net;
 }
 #pragma clang diagnostic pop
@@ -487,7 +501,7 @@ vector<vector<int>> AdjList(const string& path, int size){
 int main()
 {
 
-    //    srand(time(nullptr));
+    srand(time(nullptr));
 
     float p, q, h, r, l;
     int length;
@@ -503,8 +517,8 @@ int main()
 //    p = 0.75;
     q = 0.99;
     h = 0.80;
-    r = 0.008;
-    l = 0.00015;
+    r = 0.15;
+    l = 0.005;
 
 
     ostringstream filenames(",");
@@ -528,12 +542,6 @@ int main()
     for (int i =0; i < adjlist.size() - 1; i++){
         the_network.s_list.insert(i);
     }
-
-//    cout << 1;
-//    vector<set<int>> all_list = read_list(path+"list"+filename,lattice_size);
-//    cout << 2;
-//    the_network.A_list = all_list[0];
-//    cout << the_network.A_list.size();
 
 //     first step is lightning
 
@@ -581,29 +589,31 @@ int main()
 
     vector<vector<int>> results;
 
-    int save_step = 10000;
+    int save_step = 500;
     results.reserve(save_step);
 
     clock_t tStart = clock();
 
     for(int k = 1 ; k <= 100000 ; k++){
 
+        cout << k << "\n";
         /// save with vector
         results.insert(results.end(),{{static_cast<int>(the_network.A_list.size()), static_cast<int>(the_network.a_list.size()),
                                               static_cast<int>(the_network.B_list.size()), static_cast<int>(the_network.b_list.size()),
                                               static_cast<int>(the_network.light.to_ulong())}});
-
-        the_network = transmission(the_network,p,q,h);
         if (the_network.A_list.empty() && the_network.B_list.empty()){
             lightning_time = int(norm_dis(gen));
             the_network = immunization(the_network,r,lightning_time);
+            continue;
         }
+        the_network = transmission(the_network,p,q,h);
+
 
         if (k % save_step == 0) {
 
             printf("Time taken: %.2fs\n", (double) (clock() - tStart) / CLOCKS_PER_SEC);
 
-            ofstream file(filename, ios_base::app | ios_base::out);
+            ofstream file(path + filename, ios_base::app | ios_base::out);
             ostream_iterator<int> output_iterator(file, ",");
             for (auto res: results) {
                 copy(res.begin(), res.end(), output_iterator);
