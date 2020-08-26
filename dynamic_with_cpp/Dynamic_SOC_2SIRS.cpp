@@ -517,8 +517,8 @@ int main()
 //    p = 0.75;
     q = 0.99;
     h = 0.80;
-    r = 0.15;
-    l = 0.005;
+    r = 0.21;
+    l = 0.003;
 
 
     ostringstream filenames(",");
@@ -589,12 +589,12 @@ int main()
 
     vector<vector<int>> results;
 
-    int save_step = 500;
+    int save_step = 10000;
     results.reserve(save_step);
 
     clock_t tStart = clock();
 
-    for(int k = 1 ; k <= 100000 ; k++){
+    for(int k = 1 ; k <= 300000 ; k++){
 
         cout << k << "\n";
         /// save with vector
