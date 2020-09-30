@@ -1,6 +1,7 @@
 //#include<windows.h>
 
 #include<vector>
+#include <tuple>
 #include<set>
 #include<iostream>
 #include<fstream>
@@ -82,7 +83,10 @@ network create(network net, vector<vector<int> > data)
 #pragma ide diagnostic ignored "bugprone-branch-clone"
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
 
-network transmission(network net,float p, float q, float h) {
+tuple<network, int, int> transmission(network net,float p, float q, float h) {
+
+    int A_count = 0;
+    int B_count = 0;
 
     set<int> infected;
     set_union(net.A_list.begin(), net.A_list.end(),
@@ -126,11 +130,13 @@ network transmission(network net,float p, float q, float h) {
                             net.all_state[neigh].flip(3);
                             net.A_list.insert(neigh);
                             net.s_list.erase(neigh);
+                            A_count++;
                             //                                cout << "A+,";
                         } else if (random > 0.5) { /// S to B
                             net.all_state[neigh].flip(2);
                             net.B_list.insert(neigh);
                             net.s_list.erase(neigh);
+                            B_count++;
 //                                cout << "B+,";
                         }
                     }
@@ -141,6 +147,7 @@ network transmission(network net,float p, float q, float h) {
                     if (float(rand() % 100) / 100 < q) {
                         net.all_state[neigh].flip(2);
                         net.B_list.insert(neigh);
+                        B_count++;
 //                            cout << "B+,";
                     }
                 }
@@ -151,12 +158,13 @@ network transmission(network net,float p, float q, float h) {
                         net.all_state[neigh].flip(3);
                         net.A_list.insert(neigh);
 //                            cout << "A+,";
+                        A_count++;
                     }
                 }
             }
         }
 
-            /// A or A
+            /// A or Ab
         else if (net.all_state[inf][7] && !net.all_state[inf][6]) { /// A or Ab
 //            cout << "A is here,\n";
             /// health
@@ -178,6 +186,7 @@ network transmission(network net,float p, float q, float h) {
                         if (float(rand() % 100) / 100 < q) {      /// B to AB or Ab
                             net.all_state[neigh].flip(3);
                             net.A_list.insert(neigh);
+                            A_count++;
 //                            cout << "A+,";
                         }
                     } else if (net.all_state[neigh].none()) {   /// Neighbor is S
@@ -185,6 +194,7 @@ network transmission(network net,float p, float q, float h) {
                             net.all_state[neigh].flip(3);
                             net.A_list.insert(neigh);
                             net.s_list.erase(neigh);
+                            A_count++;
 //                            cout << "A+,";
                         }
                     }
@@ -213,6 +223,7 @@ network transmission(network net,float p, float q, float h) {
                         if (float(rand() % 100) / 100 < q) {      /// A to AB or aB
                             net.all_state[neigh].flip(2);
                             net.B_list.insert(neigh);
+                            B_count++;
 //                            cout << "B+,";
                         }
                     } else if (net.all_state[neigh].none()) {                   /// Neighboor is S
@@ -220,6 +231,7 @@ network transmission(network net,float p, float q, float h) {
                             net.all_state[neigh].flip(2);
                             net.B_list.insert(neigh);
                             net.s_list.erase(neigh);
+                            B_count++;
 //                            cout << "B+,";
                         }
                     }
@@ -244,20 +256,25 @@ network transmission(network net,float p, float q, float h) {
         j = j | (j >> 4);
     }
     net.light = 0;
-    return net;
+    return make_tuple(net, A_count, B_count);
 }
 
-network immunization(network net,float r, float time){
+tuple<network,int,int> immunization(network net,float r, float time){
+
+    int A_count = 0;
+    int B_count = 0;
 
     set<int> immune;
     set_union(net.a_list.begin(), net.a_list.end(),
               net.b_list.begin(), net.b_list.end(),inserter(immune, immune.begin()));
 
+    float proper_P = 1 - exp(-r*time);
+
     ////////////////////////// Immune
         for (int imm : immune) {
 
             float q_random = float(rand() % 100) / 100;
-            if (q_random < r && q_random > (r * pow((1 - r), time))) {
+            if (q_random < proper_P) {
                 if (net.all_state[imm][5] && net.all_state[imm][4]) { //// be ab
 //                    if (float(rand() % 100) / 100 < r) {
                     float random = float(rand() % 100) / 100;
@@ -313,6 +330,10 @@ network immunization(network net,float r, float time){
 
             net.light.flip(0);
             net.light.flip(1);
+
+            A_count++;
+            B_count++;
+
         } else if (random > 0.33 && random < 0.66) { //// S to A
             net.all_state[sus].flip(7);
             net.all_state[sus].flip(3);
@@ -320,6 +341,8 @@ network immunization(network net,float r, float time){
             net.s_list.erase(sus);
 
             net.light.flip(0);
+            A_count++;
+
         } else if (random > 0.66) { //// S to B
             net.all_state[sus].flip(6);
             net.all_state[sus].flip(2);
@@ -327,9 +350,11 @@ network immunization(network net,float r, float time){
             net.s_list.erase(sus);
 
             net.light.flip(1);
+            B_count++;
+
         }
     }
-    return net;
+    return make_tuple(net, A_count, B_count);
 }
 #pragma clang diagnostic pop
 
@@ -382,114 +407,6 @@ vector<vector<int>> AdjList(const string& path, int size){
     return adjlist;
 }
 
-///// Function for read and write, Network Data as state and lists
-//vector < bitset<8> > read_stat(const string& path, int size){
-//    ifstream state;
-//    state.open(path);
-//    string line;
-//
-//    vector < bitset<8> > states;
-//    states.reserve(size);
-//
-//    int o = 3;
-//    bitset<8> number = 0;
-//
-//    getline(state, line);
-//
-//    for(int i = 1; i < line.length(); i++)
-//    {
-//        if(line[i] == '1')
-//        {
-//            number.flip(o);
-//        }
-//        else if(line[i] == ',' || line[i] == ']')
-//        {
-//            states.emplace_back(number);
-//            number = 0;
-//            o = 3;
-//        }
-//        if(line[i] == 'e')
-//            break;
-//        o--;
-//    }
-//
-//    state.close();
-//
-//    return states;
-//}
-
-
-//vector <set<int>> read_list(const string& path, int size){
-//    ifstream list;
-//    list.open(path);
-//    string line;
-//    cout << 5;
-//    vector<set <int>> q_list;
-//
-//    int x = 0;
-////    , o = 3;
-//    while (true) {
-//        int number = 0;
-//        getline(list, line);
-//
-//        if(line.length() == 0){
-//            cout << 0 << "\n";
-//            break;}
-//
-//        for (int i = 1; i < line.length(); i++) {
-//            q_list[x] = {};
-//            if (line[i] >= '0' && line[i] <= '9') {
-//                number = number * 10 + int(line[i] - '0');
-//            }
-//            else if (line[i] == ',') {
-//                cout << 5;
-//                q_list[x].insert(number);
-//                number = 0;
-//            }
-//            if (line[i] == 'e')
-//                break;
-//        }
-//        x++;
-//        cout << 1 << "\n";
-//    }
-//    list.close();
-//
-//    return q_list;
-//}
-
-//void save_network_details(const network& net,const string& path,const string& filename){
-//    ofstream s_file(path+"state"+filename);
-//    for (auto sta: net.all_state) {
-//        s_file << sta << ",";
-//    }
-//    s_file << "e";
-//
-//    ofstream l_file(path+"list"+filename);
-//    for (auto Al: net.A_list) {
-//        l_file << Al << ",";
-//    }
-//    l_file << "e" << "\n";
-//
-//    for (auto al: net.a_list) {
-//        l_file << al << ",";
-//    }
-//    l_file << "e" << "\n";
-//
-//    for (auto Bl: net.B_list) {
-//        l_file << Bl << ",";
-//    }
-//    l_file << "e" << "\n";
-//
-//    for (auto bl: net.b_list) {
-//        l_file << bl << ",";
-//    }
-//    l_file << "e" << "\n";
-//
-//    for (auto sl: net.s_list) {
-//        l_file << sl << ",";
-//    }
-//    l_file << "e" << "\n";
-//}
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cert-msc51-cpp"
@@ -518,8 +435,10 @@ int main()
     q = 0.99;
     h = 0.80;
     r = 0.21;
-    l = 0.003;
+    l = 0.1;
 
+    int C_A = 0;
+    int C_B = 0;
 
     ostringstream filenames(",");
     filenames.precision(2);
@@ -559,6 +478,10 @@ int main()
 
         the_network.light.flip(0);
         the_network.light.flip(1);
+
+        C_A++;
+        C_B++;
+
     }
     else if (random > 0.33 && random < 0.66) { //// S to A
         the_network.all_state[sus].flip(7);
@@ -567,6 +490,8 @@ int main()
         the_network.s_list.erase(sus);
 
         the_network.light.flip(0);
+
+        C_A++;
     }
     else if (random > 0.66) { //// S to B
         the_network.all_state[sus].flip(6);
@@ -575,52 +500,87 @@ int main()
         the_network.s_list.erase(sus);
 
         the_network.light.flip(1);
+
+        C_B++;
     }
+
+
+
+
 
 
 
     random_device rd;
     mt19937 gen(rd());
 
-    float mean_lightning_time = 1 / l;
+//    float mean_lightning_time = 1 / l;
 
-    normal_distribution<float> norm_dis(mean_lightning_time,sqrt(mean_lightning_time));
+    exponential_distribution<float> exp_dis(l);
     int lightning_time;
-
-    vector<vector<int>> results;
+///////////////////////
+//    vector<vector<int>> in_time_results;
+    vector<vector<int>> count_results;
 
     int save_step = 10000;
-    results.reserve(save_step);
+//    in_time_results.reserve(save_step);
+    count_results.reserve(save_step);
 
+//////////////////////////
     clock_t tStart = clock();
+
+    int CA, CB;
 
     for(int k = 1 ; k <= 300000 ; k++){
 
         cout << k << "\n";
-        /// save with vector
-        results.insert(results.end(),{{static_cast<int>(the_network.A_list.size()), static_cast<int>(the_network.a_list.size()),
-                                              static_cast<int>(the_network.B_list.size()), static_cast<int>(the_network.b_list.size()),
-                                              static_cast<int>(the_network.light.to_ulong())}});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//         save with vector, in time result                                                                                                           //
+//        in_time_results.insert(in_time_results.end(),{{static_cast<int>(the_network.A_list.size()), static_cast<int>(the_network.a_list.size()),    //
+//                                              static_cast<int>(the_network.B_list.size()), static_cast<int>(the_network.b_list.size()),             //
+//                                              static_cast<int>(the_network.light.to_ulong())}});                                                    //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         if (the_network.A_list.empty() && the_network.B_list.empty()){
-            lightning_time = int(norm_dis(gen));
-            the_network = immunization(the_network,r,lightning_time);
+            /// save with vector
+            count_results.insert(count_results.end(),{{C_A, C_B}});
+            count_results.insert(count_results.end(),{{0, 0}});
+            ///////////////////
+            lightning_time = int(exp_dis(gen));
+            tie(the_network,CB, CA) = immunization(the_network,r,lightning_time);
+            C_A += CA;
+            C_B += CB;
             continue;
         }
-        the_network = transmission(the_network,p,q,h);
+
+        tie(the_network,CB, CA) = transmission(the_network,p,q,h);
+        C_A += CA;
+        C_B += CB;
 
 
         if (k % save_step == 0) {
 
             printf("Time taken: %.2fs\n", (double) (clock() - tStart) / CLOCKS_PER_SEC);
 
-            ofstream file(path + filename, ios_base::app | ios_base::out);
-            ostream_iterator<int> output_iterator(file, ",");
-            for (auto res: results) {
-                copy(res.begin(), res.end(), output_iterator);
-                file << "\n";
+            ofstream  count_results_file(path + filename, ios_base::app | ios_base::out);
+            ostream_iterator<int> output_iterator1(count_results_file, ",");
+            for (auto res: count_results) {
+                copy(res.begin(), res.end(), output_iterator1);
+                count_results_file << "\n";
             }
-            file.close();
-            results.clear();
+            count_results_file.close();
+            count_results.clear();
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//            ofstream in_time_results_file(path + filename, ios_base::app | ios_base::out);   //
+//            ostream_iterator<int> output_iterator2(in_time_results_file, ",");               //
+//            for (auto res: in_time_results) {                                                //
+//                copy(res.begin(), res.end(), output_iterator2);                              //
+//                in_time_results_file << "\n";                                                //
+//            }                                                                                //
+//            in_time_results_file.close();                                                    //
+//            in_time_results.clear();                                                         //
+/////////////////////////////////////////////////////////////////////////////////////////////////
             tStart = clock();
         }
     }
