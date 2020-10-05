@@ -255,7 +255,7 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
         j = j << 4;
         j = j | (j >> 4);
     }
-    net.light = 0;
+//    net.light = 0;
     return make_tuple(net, A_count, B_count);
 }
 
@@ -315,6 +315,8 @@ tuple<network,int,int> immunization(network net,float r, float time){
         j = j | (j >> 4);
     }
 ////////////////////////// lightning
+
+    net.light = 0;
     if (!net.s_list.empty()) {
         int sus = rand() % net.s_list.size();
 
@@ -423,14 +425,13 @@ int main()
     float p, q, h, r, l;
     int length;
 
-    string path = "/home/respeli/All_Programing_Stuff/Self-Organized-Criticality-on-Spreading-of-Cooperative-Diseases/dynamic_with_cpp/";
+    string path = "/home/respeli/All_Programing_Stuff/Self-Organized-Criticality-on-Spreading-of-Cooperative-Diseases/Cpp_Dynamic/";
 
     cout<<"please enter lattice length and outbreak probability, like 256 , 0.55 "<<"\n";
     cin >> length >> p;
 
 
     int lattice_size = length * length;
-
 //    p = 0.75;
     q = 0.99;
     h = 0.80;
@@ -450,9 +451,9 @@ int main()
     // read adjacency matrix from file and make 2d vector for adjacency matrix
     string line;
     vector<vector<int>> adjlist;
-
+//
     adjlist = AdjList(path + "AdjList" + to_string(length) +"lattice.txt",lattice_size);
-
+//
     // creat network structure and Quantify with adjacency matrix
 
     network the_network;
@@ -505,11 +506,6 @@ int main()
     }
 
 
-
-
-
-
-
     random_device rd;
     mt19937 gen(rd());
 
@@ -521,18 +517,19 @@ int main()
 //    vector<vector<int>> in_time_results;
     vector<vector<int>> count_results;
 
-    int save_step = 10000;
+    int save_step = 100;
 //    in_time_results.reserve(save_step);
     count_results.reserve(save_step);
 
 //////////////////////////
     clock_t tStart = clock();
 
-    int CA, CB;
+    int CA, CB, fire_lifetime;
 
+    fire_lifetime = 0;
     for(int k = 1 ; k <= 300000 ; k++){
 
-        cout << k << "\n";
+//        cout << k << "\n";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //         save with vector, in time result                                                                                                           //
@@ -543,8 +540,10 @@ int main()
 
         if (the_network.A_list.empty() && the_network.B_list.empty()){
             /// save with vector
-            count_results.insert(count_results.end(),{{C_A, C_B}});
-            count_results.insert(count_results.end(),{{0, 0}});
+            count_results.insert(count_results.end(),{{C_A, C_B,fire_lifetime,static_cast<int>(the_network.light.to_ulong())}});
+            C_A = 0;
+            C_B = 0;
+            fire_lifetime = 0;
             ///////////////////
             lightning_time = int(exp_dis(gen));
             tie(the_network,CB, CA) = immunization(the_network,r,lightning_time);
@@ -554,6 +553,7 @@ int main()
         }
 
         tie(the_network,CB, CA) = transmission(the_network,p,q,h);
+        fire_lifetime ++;
         C_A += CA;
         C_B += CB;
 
