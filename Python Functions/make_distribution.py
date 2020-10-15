@@ -1,42 +1,26 @@
-
-# coding: utf-8
-
-# In[9]:
-
-
-def MakeDist(datas):
-    
+def MakeDist(data):
+#     cleaning data by chose seed
     import numpy as np
     
-    count_list = []
-    maximum = max(datas)
-    for i in range(1,maximum+1):
-        n = list(datas).count(i)
-        if n != 0:
-            count_list.append([i,n])
-        else:
-            count_list.append([i,0])
+    unique, counts = np.unique(data[(data!=0)], return_counts=True)
 
-    basket = [0]
-    x = 6
-    count_list = np.transpose(count_list)
-
-    while(1):
-        a = int(1.2**x)
-        if a >= maximum:
-            basket.append(maximum)
-            break
+    basket = list(np.arange(1,10))
+    x = 13
+    a = int(np.power(1.2543,x))
+    while(a < np.max(unique)):
         basket.append(a)
-        x += 1
+        x += 1 
+        a = int(np.power(1.2543,x))
+    basket_1 = [0] + basket
+    basket.append(np.max(unique))
 
-    new_data = []
-    for i in range(len(basket)-1):
-        mean = np.mean(count_list[1,basket[i]:basket[i+1]])
-        if basket[i] == 0:
-            basket[i] = 1
-        new_data.append([basket[i],mean])
+    dist = [] 
+    for seed in zip(basket_1,basket):
+        range_counts = counts[(unique >seed[0]) & (unique <= seed[1])]
+        mean = np.sum(range_counts) / (seed[1] - seed[0])
+        std = np.sqrt(np.sum(np.square(range_counts - mean)) / (range_counts.shape[0]))
+        dist.append([mean,std])
+        
+    result = np.concatenate((np.array(basket).reshape(len(basket),1),np.array(dist)),axis = 1)
 
-    final_data = np.transpose(new_data)
-
-    return final_data
-
+    return result[~np.isnan(result).any(axis=1)]
