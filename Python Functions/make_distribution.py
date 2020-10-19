@@ -4,13 +4,13 @@ def MakeDist(data):
     
     unique, counts = np.unique(data[(data!=0)], return_counts=True)
 
-    basket = list(np.arange(1,10))
-    x = 13
-    a = int(np.power(1.2543,x))
+    basket = list(np.arange(1,11))
+    x = 1
+    a = int(10 * np.power(1.2543,x))
     while(a < np.max(unique)):
         basket.append(a)
         x += 1 
-        a = int(np.power(1.2543,x))
+        a = int(10 * np.power(1.2543,x))
     basket_1 = [0] + basket
     basket.append(np.max(unique))
 
