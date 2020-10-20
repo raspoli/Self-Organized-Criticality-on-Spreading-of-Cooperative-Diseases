@@ -25,7 +25,7 @@ public:
     ////      first three bit from right are evolve stat and first three bit from left are last stat
     ////        as example  A:1000,  B:0100, AB:1100, a:0010, b:0001, AB:1100, Ab:1001, aB;0110, ab;0011, S:0000
     ////        S = 0, a = 1, b = 2, ab = 3, A = 4, B = 5, aB = 6, Ab = 7, AB = 8
-    vector < bitset<8> > all_state; ///  list of previous state and evolve state for each indivisuals
+    vector < bitset<8> > all_state; ///  list of previous state and evolve state for each individuals
 
     vector<vector<int> > Neighbor;
 
@@ -67,7 +67,7 @@ network create(network net, vector<vector<int> > data)
 
 //network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
 //
-/// it was merge of Transmition and Immunation Function in last version of code
+/// it was merge of Transmission and Immunization Function in last version of code
 //
 // }
 //
@@ -217,7 +217,7 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
                                 net.B_list.insert(neigh);
                                 B_count++;
                             }
-                        } else if (net.all_state[neigh].none()) {                   /// Neighboor is S
+                        } else if (net.all_state[neigh].none()) {                   /// Neighbor is S
                             if (float(rand() % 100) / 100 < p) {       /// S to B
                                 got_sick.insert(neigh);
                                 net.all_state[neigh].flip(2);
@@ -408,7 +408,7 @@ int main()
                                                             ///
 //    float mean_lightning_time = 1 / l;                    ///
     int lightning_time;                                     ///
-    int total_step = 100000;                                ///
+    int total_step = 300000;                                ///
     int save_step = 10000;                                  ///
     int Count_A = 0;                                        ///
     int Count_B = 0;                                        ///
