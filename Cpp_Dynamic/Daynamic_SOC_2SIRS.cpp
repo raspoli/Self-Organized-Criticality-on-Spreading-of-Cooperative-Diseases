@@ -24,8 +24,9 @@ class network
 public:
     ////      first three bit from right are evolve stat and first three bit from left are last stat
     ////        as example  A:1000,  B:0100, AB:1100, a:0010, b:0001, AB:1100, Ab:1001, aB;0110, ab;0011, S:0000
+    ////        S = 0, a = 1, b = 2, ab = 3, A = 4, B = 5, aB = 6, Ab = 7, AB = 8
     vector < bitset<8> > all_state; ///  list of previous state and evolve state for each indivisuals
-                        ////      0000,0000
+
     vector<vector<int> > Neighbor;
 
     set<int> A_list;
@@ -45,14 +46,10 @@ network create(network net, vector<vector<int> > data)
     net.all_state.reserve(data.size());
     net.Neighbor.reserve(data.size());
 
-//    bitset<8> is;
-//    is = 0;
-
     for(int i = 0; i < data.size() - 1; i++)
     {
         net.all_state.emplace_back(bitset<8>(0));
         net.Neighbor.push_back(data[i]);
-//        cout << net.all_state[i] << "\n";
     }
     net.A_list = {};
     net.a_list = {};
@@ -64,7 +61,8 @@ network create(network net, vector<vector<int> > data)
 ////////////////////////////////
 
 
-////A:1000,  B:0100, AB:1100, a:0010, b:0001, Ab:1001, aB;0110, ab;0011, S:0000
+////        A:1000,  B:0100, AB:1100, a:0010, b:0001, Ab:1001, aB;0110, ab;0011, S:0000
+////        S = 0, a = 1, b = 2, ab = 3, A = 4, B = 5, aB = 6, Ab = 7, AB = 8
 
 
 //network dynamics_2SIRS(network net,float p, float q, float h, float r, float f){
@@ -97,12 +95,12 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
     for (int inf : infected) { /// be infected
 
         /// AB
-        if (net.all_state[inf][7] && net.all_state[inf][6]) {  /// AB
+        if (net.all_state[inf][7] && net.all_state[inf][6]) {
             /// health
             if (float(rand() % 100) / 100 < h) {  /// loss A or B
 
-                float random = float(float(rand() % 100) / 100);
-                if (random < 0.5) {    /// AB? to aB
+                float random = float(rand() % 100) / 100;
+                if (random < 0.5) {    /// AB to aB
                     net.all_state[inf].flip(3);
                     net.all_state[inf].flip(1);
                     net.A_list.erase(inf);
@@ -118,47 +116,45 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
             /// transmission
             for (auto neigh : net.Neighbor[inf]) {
 
-                const bool is_in = got_sick.find(neigh) != got_sick.end();
-                if (is_in){
-                    continue;
-                }
-                /// neighbor is S
-                if (net.all_state[neigh].none()) {  /// neighbor is S
+                if (got_sick.find(neigh) == got_sick.end()){
+                    /// neighbor is S
+                    if (net.all_state[neigh].none()) {  /// neighbor is S
 
-                    if (float(rand() % 100) / 100 < p) {
-                        got_sick.insert(neigh);
-                        float random = float(rand() % 100) / 100;
-                        if (random < 0.5) { /// S to A
-                            net.all_state[neigh].flip(3);
-                            net.A_list.insert(neigh);
-                            net.s_list.erase(neigh);
-                            A_count++;
-                        } else { /// S to B
+                        if (float(rand() % 100) / 100 < p) {
+                            got_sick.insert(neigh);
+                            float random = float(rand() % 100) / 100;
+                            if (random < 0.5) { /// S to A
+                                net.all_state[neigh].flip(3);
+                                net.A_list.insert(neigh);
+                                net.s_list.erase(neigh);
+                                A_count++;
+                            } else {              /// S to B
+                                net.all_state[neigh].flip(2);
+                                net.B_list.insert(neigh);
+                                net.s_list.erase(neigh);
+                                B_count++;
+                            }
+                        }
+                    }
+
+                        /// neighbor has A or a
+                    else if (!(net.all_state[neigh][6] || net.all_state[neigh][4] || net.all_state[neigh].none())) { /// neighbor has A or a
+                        if (float(rand() % 100) / 100 < q) {
+                            got_sick.insert(neigh);
                             net.all_state[neigh].flip(2);
                             net.B_list.insert(neigh);
-                            net.s_list.erase(neigh);
                             B_count++;
                         }
                     }
-                }
 
-                    /// neighbor has A or a
-                else if (!(net.all_state[neigh][6] || net.all_state[neigh][4])) { /// neighbor has A or a
-                    if (float(rand() % 100) / 100 < q) {
-                        got_sick.insert(neigh);
-                        net.all_state[neigh].flip(2);
-                        net.B_list.insert(neigh);
-                        B_count++;
-                    }
-                }
-
-                    /// neighbor has B or b
-                else if ((net.all_state[neigh][7] || net.all_state[neigh][5])) { /// neighbor has B or b
-                    if (float(rand() % 100) / 100 < q) {
-                        got_sick.insert(neigh);
-                        net.all_state[neigh].flip(3);
-                        net.A_list.insert(neigh);
-                        A_count++;
+                        /// neighbor has B or b
+                    else if (!(net.all_state[neigh][7] || net.all_state[neigh][5] || net.all_state[neigh].none())) { /// neighbor has B or b
+                        if (float(rand() % 100) / 100 < q) {
+                            got_sick.insert(neigh);
+                            net.all_state[neigh].flip(3);
+                            net.A_list.insert(neigh);
+                            A_count++;
+                        }
                     }
                 }
             }
@@ -174,30 +170,26 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
                 net.A_list.erase(inf);
                 net.a_list.insert(inf);
             }
-
             /// transmission
             for (auto neigh : net.Neighbor[inf]) {
 
-                const bool is_in = got_sick.find(neigh) != got_sick.end();
-                if (is_in){
-                    continue;
-                }
-                if (!(net.all_state[neigh][7] || net.all_state[neigh][5])) { /// the neighbor is not A or a
-
-                    if (net.all_state[neigh][6] != net.all_state[neigh][4]) { /// Neighbor is B or b
-                        if (float(rand() % 100) / 100 < q) {      /// B to AB or Ab
-                            got_sick.insert(neigh);
-                            net.all_state[neigh].flip(3);
-                            net.A_list.insert(neigh);
-                            A_count++;
-                        }
-                    } else if (net.all_state[neigh].none()) {   /// Neighbor is S
-                        if (float(rand() % 100) / 100 < p) {       /// S to A
-                            got_sick.insert(neigh);
-                            net.all_state[neigh].flip(3);
-                            net.A_list.insert(neigh);
-                            net.s_list.erase(neigh);
-                            A_count++;
+                if (got_sick.find(neigh) == got_sick.end()) {
+                    if (!(net.all_state[neigh][7] || net.all_state[neigh][5])) { /// the neighbor is not A or a
+                        if (net.all_state[neigh][6] != net.all_state[neigh][4]) { /// Neighbor is B or b
+                            if (float(rand() % 100) / 100 < q) {      /// B to AB or Ab
+                                got_sick.insert(neigh);
+                                net.all_state[neigh].flip(3);
+                                net.A_list.insert(neigh);
+                                A_count++;
+                            }
+                        } else if (net.all_state[neigh].none()) {   /// Neighbor is S
+                            if (float(rand() % 100) / 100 < p) {       /// S to A
+                                got_sick.insert(neigh);
+                                net.all_state[neigh].flip(3);
+                                net.A_list.insert(neigh);
+                                net.s_list.erase(neigh);
+                                A_count++;
+                            }
                         }
                     }
                 }
@@ -216,41 +208,26 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
             }
             /// transmission
             for (auto neigh : net.Neighbor[inf]) {
-
-                const bool is_in = got_sick.find(neigh) != got_sick.end();
-                if (is_in){
-                    continue;
-                }
-                if (!(net.all_state[neigh][6] || net.all_state[neigh][4])) {    /// the neighbor is not A or a
-
-                    if (net.all_state[neigh][7] != net.all_state[neigh][5]) { /// Neighbor is A or a
-                        if (float(rand() % 100) / 100 < q) {      /// A to AB or aB
-                            got_sick.insert(neigh);
-                            net.all_state[neigh].flip(2);
-                            net.B_list.insert(neigh);
-                            B_count++;
-                        }
-                    } else if (net.all_state[neigh].none()) {                   /// Neighboor is S
-                        if (float(rand() % 100) / 100 < p) {       /// S to B
-                            got_sick.insert(neigh);
-                            net.all_state[neigh].flip(2);
-                            net.B_list.insert(neigh);
-                            net.s_list.erase(neigh);
-                            B_count++;
+                if (got_sick.find(neigh) == got_sick.end()) {
+                    if (!(net.all_state[neigh][6] || net.all_state[neigh][4])) {    /// the neighbor is not A or a
+                        if (net.all_state[neigh][7] != net.all_state[neigh][5]) { /// Neighbor is A or a
+                            if (float(rand() % 100) / 100 < q) {      /// A to AB or aB
+                                got_sick.insert(neigh);
+                                net.all_state[neigh].flip(2);
+                                net.B_list.insert(neigh);
+                                B_count++;
+                            }
+                        } else if (net.all_state[neigh].none()) {                   /// Neighboor is S
+                            if (float(rand() % 100) / 100 < p) {       /// S to B
+                                got_sick.insert(neigh);
+                                net.all_state[neigh].flip(2);
+                                net.B_list.insert(neigh);
+                                net.s_list.erase(neigh);
+                                B_count++;
+                            }
                         }
                     }
                 }
-            }
-        }
-        else{
-            net.A_list.erase(inf);
-            net.B_list.erase(inf);
-
-            if (net.all_state[inf][0]){
-                net.a_list.insert(inf);
-            }
-            if (net.all_state[inf][1]){
-                net.b_list.insert(inf);
             }
         }
     }
@@ -314,7 +291,6 @@ tuple<network,int,int,int> immunization(network net,float r, float time){
     net.light = 0;
     if (!net.s_list.empty()) {
         int sus = rand() % net.s_list.size();
-
         float random = float(rand() % 100) / 100;
         if (random < 0.33) {   //// S to AB
             net.all_state[sus].flip(7);
@@ -432,7 +408,7 @@ int main()
                                                             ///
 //    float mean_lightning_time = 1 / l;                    ///
     int lightning_time;                                     ///
-    int total_step = 300000;                                ///
+    int total_step = 100000;                                ///
     int save_step = 10000;                                  ///
     int Count_A = 0;                                        ///
     int Count_B = 0;                                        ///
@@ -475,14 +451,13 @@ int main()
     for (int i =0; i < adjlist.size() - 1; i++){
         the_network.s_list.insert(i);
     }
-
     init_S = the_network.s_list.size();
     init_a = the_network.a_list.size();
     init_b = the_network.b_list.size();
     immune_count = 0;
 
 ///////// first step is lightning //////////////////////////////
-                                                             ///
+    the_network.light = 0;                                   ///
     int sus = rand() % the_network.s_list.size();            ///
                                                              ///
     float random = float(rand() % 100) / 100;                ///
