@@ -1,4 +1,5 @@
 //#include<windows.h>
+//#include <unordered_map>
 #include <vector>
 #include <tuple>
 #include <set>
@@ -40,7 +41,7 @@ public:
     list<int> a_list;
     list<int> b_list;
 
-    set<int> s_list;
+//    set<int> s_list;
 
     bitset<2> light;
 
@@ -70,7 +71,7 @@ network create(network net, int size)
 //    net.a_list = {};
 //    net.b_list = {};
 
-    net.s_list = {};
+//    net.s_list = {};
 
 
     return net;
@@ -120,7 +121,7 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
                         got_sick.insert(got_sick.end(),*neigh);
                         net.all_state[*neigh].flip(3);
                         net.A_list2.insert(net.A_list2.end(),*neigh); /// 2
-                        net.s_list.erase(*neigh);
+//                        net.s_list.erase(*neigh);
                         A_count++;
                     }
                 }
@@ -154,7 +155,7 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
                         got_sick.insert(got_sick.end(),*neigh);
                         net.all_state[*neigh].flip(2);
                         net.B_list2.insert(net.B_list2.end(),*neigh); /// 2
-                        net.s_list.erase(*neigh);
+//                        net.s_list.erase(*neigh);
                         B_count++;
                     }
                 }
@@ -162,13 +163,14 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
                     if (uniform_dis(gen) < q) {      /// B or b to AB or Ab
                         got_sick.insert(got_sick.end(),*neigh);
                         net.all_state[*neigh].flip(2);
-                        net.B_list2.insert(net.A_list2.end(),*neigh); /// 2
+                        net.B_list2.insert(net.B_list2.end(),*neigh); /// 2
                         B_count++;
                     }
                 }
             }
         }
         /// aB or B to ab or b
+
         net.all_state[*inf].flip(2);
         net.all_state[*inf].flip(0);
         net.all_state[*inf] = net.all_state[*inf] << 4;
@@ -197,7 +199,7 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
                         got_sick.insert(got_sick.end(),*neigh);
                         net.all_state[*neigh].flip(3);
                         net.A_list1.insert(net.A_list1.end(),*neigh); /// 2
-                        net.s_list.erase(*neigh);
+//                        net.s_list.erase(*neigh);
                         A_count++;
                     }
                 }
@@ -231,7 +233,7 @@ tuple<network, int, int> transmission(network net,float p, float q, float h) {
                         got_sick.insert(got_sick.end(),*neigh);
                         net.all_state[*neigh].flip(2);
                         net.B_list1.insert(net.B_list1.end(),*neigh); /// 1
-                        net.s_list.erase(*neigh);
+//                        net.s_list.erase(*neigh);
                         B_count++;
                     }
                 }
@@ -267,6 +269,7 @@ tuple<network,int,int,int> immunization(network net,float r, float time){
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<float> uniform_dis(0.0, 1.0);
+    uniform_int_distribution<int> uniform_int(0, L2);
 
     int A_count = 0;
     int B_count = 0;
@@ -281,14 +284,16 @@ tuple<network,int,int,int> immunization(network net,float r, float time){
         if (q_random < proper_P) {
             imm_count++;
             net.all_state[*imm].flip(1);
-            who_changed.insert(who_changed.end(),*imm);
+            net.all_state[*imm].flip(5);
 
-            imm = net.a_list.erase(imm);
-            if (!net.all_state[*imm][6]) {
-                net.s_list.insert(*imm);
-            }
+//            who_changed.insert(who_changed.end(),*imm);
 //            net.all_state[*imm] = net.all_state[*imm] << 4;
 //            net.all_state[*imm] = net.all_state[*imm] | (net.all_state[*imm] >> 4);
+
+            imm = net.a_list.erase(imm);
+//            if (!net.all_state[*imm][6]) {
+//                net.s_list.insert(*imm);
+//            }
         }
     }
 
@@ -298,71 +303,31 @@ tuple<network,int,int,int> immunization(network net,float r, float time){
         if (q_random < proper_P) {
             imm_count++;
             net.all_state[*imm].flip(0);
-            who_changed.insert(who_changed.end(),*imm);
+            net.all_state[*imm].flip(4);
+
+//            who_changed.insert(who_changed.end(),*imm);
             imm = net.b_list.erase(imm);
-            if (!net.all_state[*imm][7]) {
-                net.s_list.insert(*imm);
-            }
-            net.all_state[*imm] = net.all_state[*imm] << 4;
-            net.all_state[*imm] = net.all_state[*imm] | (net.all_state[*imm] >> 4);
+//            if (!net.all_state[*imm][7]) {
+//                net.s_list.insert(*imm);
+//            }
+//            net.all_state[*imm] = net.all_state[*imm] << 4;
+//            net.all_state[*imm] = net.all_state[*imm] | (net.all_state[*imm] >> 4);
         }
     }
 
-//    cout<< new_blist.size() <<endl;
-//    cout<< net.b_list.size() <<endl;
-
-//    cout<< endl;
-
-//    cout<< imm_count <<endl;
-//    list<int> who_changed;
-//
-//    set<int> immune;
-////    immune = net.a_list.push_back(net.b_list)
-//    set_union(net.a_list.begin(), net.a_list.end(),
-//              net.b_list.begin(), net.b_list.end(),inserter(immune, immune.begin()));
-//
-//    ////////////////////////// Immune
-//    for (set<int>::iterator imm = immune.begin();imm != immune.end();++imm){
-//        float q_random = uniform_dis(gen);
-//
-//        if (q_random < proper_P) {
-//            imm_count++;
-//            who_changed.insert(who_changed.end(),*imm);
-//
-//            if (net.all_state[*imm][5] && net.all_state[*imm][4]) { //// be ab
-//                float random = uniform_dis(gen);
-//                if (random < 0.5) { ///  to b
-//                    net.all_state[*imm].flip(1);
-//                    net.a_list.erase(imm);
-//                } else { /// to a
-//                    net.all_state[*imm].flip(0);
-//                    net.b_list.erase(imm);
-//                }
-//            } else if (net.all_state[*imm][5] && !net.all_state[*imm][4]) { /// be a
-//                net.all_state[*imm].flip(1);
-//                net.a_list.erase(imm);
-//                if (!net.all_state[*imm][6]) {
-//                    net.s_list.insert(*imm);
-//                }
-//            } else if (net.all_state[*imm][4] && !net.all_state[*imm][5]) { /// be a
-//                net.all_state[*imm].flip(0);
-//                net.b_list.erase(imm);
-//                if (!net.all_state[*imm][7]) {
-//                    net.s_list.insert(*imm);
-//                }
-//            }
-//        }
+//    for (auto & j : who_changed){
+//        net.all_state[j] = net.all_state[j] << 4;
+//        net.all_state[j] = net.all_state[j] | (net.all_state[j] >> 4);
 //    }
-    for (auto & j : who_changed){
-        net.all_state[j] = net.all_state[j] << 4;
-        net.all_state[j] = net.all_state[j] | (net.all_state[j] >> 4);
-    }
 ////////////////////////// lightning
 
     net.light = 0;
-    if (!net.s_list.empty()) {
-        int sus = rand() % net.s_list.size();
+    int sus = uniform_int(gen);
+    while (net.all_state[sus][0] && net.all_state[sus][1]){
+        sus = uniform_int(gen);
+    }
 
+    if (net.all_state[sus].none()) {
         float random = uniform_dis(gen);
         if (random < 0.33) {   //// S to AB
             net.all_state[sus].flip(7);
@@ -371,7 +336,6 @@ tuple<network,int,int,int> immunization(network net,float r, float time){
             net.all_state[sus].flip(2);
             net.A_list1.push_back(sus);
             net.B_list1.push_back(sus);
-            net.s_list.erase(sus);
 
             net.light.flip(0);
             net.light.flip(1);
@@ -383,22 +347,33 @@ tuple<network,int,int,int> immunization(network net,float r, float time){
             net.all_state[sus].flip(7);
             net.all_state[sus].flip(3);
             net.A_list1.push_back(sus);
-            net.s_list.erase(sus);
+            //        net.s_list.erase(sus);
 
             net.light.flip(0);
             A_count++;
-
         } else if (random > 0.66) { //// S to B
             net.all_state[sus].flip(6);
             net.all_state[sus].flip(2);
             net.B_list1.push_back(sus);
-            net.s_list.erase(sus);
+            //        net.s_list.erase(sus);
 
             net.light.flip(1);
             B_count++;
-
         }
+    } else if (net.all_state[sus][1]){
+        net.all_state[sus].flip(6);
+        net.all_state[sus].flip(2);
+        net.B_list1.push_back(sus);
+        net.light.flip(1);
+        B_count++;
+    } else if (net.all_state[sus][0]){
+        net.all_state[sus].flip(7);
+        net.all_state[sus].flip(3);
+        net.A_list1.push_back(sus);
+        net.light.flip(0);
+        A_count++;
     }
+
     return make_tuple(net, A_count, B_count, imm_count);
 }
 #pragma clang diagnostic pop
@@ -421,9 +396,9 @@ int main()
 //////////////// Define and Initialize all Parameters /////////
     ///
     float p, q, h, r, l;                                    ///
-    int length = 256;                                       ///
+    int length = 64;                                       ///
     L = length;
-    string len = "256";                                     ///
+    string len = "64";                                     ///
     int lattice_size = length * length;                     ///
     L2 = lattice_size;
     p = 0.65;                                               ///
@@ -434,8 +409,8 @@ int main()
     ///
 //    float mean_lightning_time = 1 / l;                    ///
     int lightning_time;                                     ///
-    int total_fire = 100;                                ///
-    int save_step = 10;                                     ///
+    int total_fire = 1000;                                ///
+    int save_step = 100;                                     ///
     int Count_A = 0;                                        ///
     int Count_B = 0;                                        ///
     int CA, CB;                                             ///
@@ -447,6 +422,7 @@ int main()
     random_device rd;
     mt19937 gen(rd());
     exponential_distribution<float> exp_dis(l);
+    uniform_int_distribution<int> uniform_dis(0,lattice_size);
                                                             ///
                                                             ///
                                                             ///
@@ -477,18 +453,19 @@ int main()
     network the_network;
     the_network = create(the_network,lattice_size);
 
-    for (int i = 0; i < lattice_size; i++){
-        the_network.s_list.insert(i);
-    }
+//    for (int i = 0; i < lattice_size; i++){
+//        the_network.s_list.insert(i);
+//    }
 
-    init_S = the_network.s_list.size();
     init_a = the_network.a_list.size();
     init_b = the_network.b_list.size();
+    init_S = L2 - (init_b + init_a);
+
     immune_count = 0;
 
 ///////// first step is lightning //////////////////////////////
     ///
-    int sus = rand() % lattice_size;            ///
+    int sus = uniform_dis(gen);            ///
                                                              ///
     float random = float(rand() % 100) / 100;                ///
     if (random < 0.33) {   //// S to AB                      ///
@@ -498,7 +475,7 @@ int main()
         the_network.all_state[sus].flip(2);          ///
         the_network.A_list1.push_back(sus);                      ///
         the_network.B_list1.push_back(sus);                      ///
-        the_network.s_list.erase(sus);                       ///
+//        the_network.s_list.erase(sus);                       ///
         ///
         the_network.light.flip(0);                   ///
         the_network.light.flip(1);                   ///
@@ -513,7 +490,7 @@ int main()
         ///
         the_network.A_list1.push_back(sus);                      ///
         ///
-        the_network.s_list.erase(sus);                       ///
+//        the_network.s_list.erase(sus);                       ///
         ///
         the_network.light.flip(0);                   ///
         ///
@@ -525,7 +502,7 @@ int main()
         ///
         the_network.B_list1.push_back(sus);                      ///
         ///
-        the_network.s_list.erase(sus);                       ///
+//        the_network.s_list.erase(sus);                       ///
         ///
         the_network.light.flip(1);                   ///
         ///
@@ -549,9 +526,9 @@ int main()
 //                                              static_cast<int>(the_network.light.to_ulong())}});                                                    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//        if (the_network.A_list1.empty() && the_network.B_list1.empty()){
-        if ((CA + CB) == 0){
-            printf("t Time: %.2fs\n", (double) (clock() - tStart_t) / CLOCKS_PER_SEC);
+        if (the_network.A_list1.empty() && the_network.B_list1.empty()){
+//        if ((CA + CB) == 0){
+//            printf("t Time: %.2fs\n", (double) (clock() - tStart_t) / CLOCKS_PER_SEC);
             n++;
             k++;
             /// save with vector
@@ -562,18 +539,20 @@ int main()
             ///////////////////
             lightning_time = int(exp_dis(gen));
 
-            tStart_i = clock();
+//            tStart_i = clock();
             tie(the_network,CA, CB, immune_count) = immunization(the_network,r,lightning_time);
-            printf("i Time: %.2fs\n", (double) (clock() - tStart_i) / CLOCKS_PER_SEC);
+//            printf("i Time: %.2fs\n", (double) (clock() - tStart_i) / CLOCKS_PER_SEC);
 
 
             Count_A += CA;
             Count_B += CB;
 
-            init_S = the_network.s_list.size();
+//            init_S = the_network.s_list.size();
             init_a = the_network.a_list.size();
             init_b = the_network.b_list.size();
-            tStart_t = clock();
+            init_S = L2 - (init_b + init_a);
+
+//            tStart_t = clock();
             continue;
         }
         tie(the_network,CA, CB) = transmission(the_network,p,q,h);
@@ -582,7 +561,7 @@ int main()
         Count_B += CB;
 
 
-        if (k == 10) {
+        if (k == save_step) {
             cout << n << endl;
             k = 0;
             ofstream  count_results_file(filename, ios_base::app | ios_base::out);
