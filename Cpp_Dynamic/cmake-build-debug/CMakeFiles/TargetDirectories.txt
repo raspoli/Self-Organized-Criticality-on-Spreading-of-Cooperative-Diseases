@@ -1,0 +1,3 @@
+/home/respeli/All_Programing_Stuff/Self-Organized-Criticality-on-Spreading-of-Cooperative-Diseases/Cpp_Dynamic/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/respeli/All_Programing_Stuff/Self-Organized-Criticality-on-Spreading-of-Cooperative-Diseases/Cpp_Dynamic/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/respeli/All_Programing_Stuff/Self-Organized-Criticality-on-Spreading-of-Cooperative-Diseases/Cpp_Dynamic/cmake-build-debug/CMakeFiles/Cpp_Dynamic.dir

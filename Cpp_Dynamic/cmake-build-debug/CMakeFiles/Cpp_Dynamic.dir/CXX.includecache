@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/respeli/All_Programing_Stuff/Self-Organized-Criticality-on-Spreading-of-Cooperative-Diseases/Cpp_Dynamic/Daynamic_SOC_2SIRS.cpp
+vector
+-
+tuple
+-
+set
+-
+iostream
+-
+fstream
+-
+ctime
+-
+cstdlib
+-
+string
+-
+iterator
+-
+bitset
+-
+algorithm
+-
+list
+-
+sstream
+-
+random
+-
+cmath
+-
+
